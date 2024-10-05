@@ -8,7 +8,7 @@ const Carrito = () => {
     const [carrito, setCarrito] = useState([]);
     const [subtotal, setSubtotal] = useState(0);
     const [total, setTotal] = useState(0);
-    const [showAlert, setShowAlert] = useState(false); // Para controlar la visibilidad de la alerta
+    const [showAlert, setShowAlert] = useState(false); 
     const userId = auth.currentUser?.uid; 
 
     useEffect(() => {
@@ -26,7 +26,7 @@ const Carrito = () => {
         const calcularTotales = () => {
             const newSubtotal = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
             setSubtotal(newSubtotal);
-            setTotal(newSubtotal); // Aquí puedes agregar impuestos si lo deseas
+            setTotal(newSubtotal); 
         };
 
         calcularTotales();
@@ -53,7 +53,7 @@ const Carrito = () => {
                     precio: item.precio,
                     cantidad: item.cantidad,
                     imagen: item.imagen,
-                    fecha: new Date() // Guardar la fecha de compra
+                    fecha: new Date()
                 });
                 // Eliminar cada producto de Carrito
                 await deleteDoc(doc(db, 'Carrito', item.id));

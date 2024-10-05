@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
 import { doc, getDoc, collection, addDoc, getDocs, updateDoc } from 'firebase/firestore';
-import { auth } from '../firebase'; // Para obtener el usuario actual
+import { auth } from '../firebase'; 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { Oval } from 'react-loader-spinner';
@@ -16,7 +16,7 @@ function Details() {
   const [comentarios, setComentarios] = useState([]); 
   const [nuevoComentario, setNuevoComentario] = useState(''); 
   const [user, setUser] = useState(null); 
-  const [showAlert, setShowAlert] = useState(false); // Estado para la alerta
+  const [showAlert, setShowAlert] = useState(false);
 
   useEffect(() => {
     // Obtener los detalles del producto
@@ -37,7 +37,7 @@ function Details() {
       const comentariosSnapshot = await getDocs(comentariosCollection);
       const comentariosList = comentariosSnapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((comentario) => comentario.productoId === id); // Filtrar por ID del producto
+        .filter((comentario) => comentario.productoId === id);
       setComentarios(comentariosList);
     };
 
@@ -56,7 +56,7 @@ function Details() {
 
   const handleAgregarComentario = async () => {
     if (nuevoComentario.trim() === '') {
-      return; // No hacer nada si el comentario está vacío
+      return; 
     }
   
     try {
@@ -72,7 +72,7 @@ function Details() {
       };
   
       await addDoc(collection(db, 'comentarios'), comentario);
-      setNuevoComentario(''); // Limpiar el campo del comentario
+      setNuevoComentario(''); 
   
       // Actualizar la lista de comentarios
       setComentarios((prevComentarios) => [...prevComentarios, comentario]);
@@ -84,7 +84,7 @@ function Details() {
   // Función para agregar el producto al carrito
   const handleAgregarAlCarrito = async () => {
     if (cantidad < 1 || !producto) {
-      return; // No hacer nada si la cantidad es inválida
+      return; 
     }
 
     try {

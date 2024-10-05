@@ -21,9 +21,9 @@ function Admin() {
     });
     const [productos, setProductos] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const productsPerPage = 7; // Número de productos por página
-    const [menuVisible, setMenuVisible] = useState(false); // Controlar la visibilidad del menú
-    const navigate = useNavigate(); // Cambiado a useNavigate
+    const productsPerPage = 7; 
+    const [menuVisible, setMenuVisible] = useState(false); 
+    const navigate = useNavigate(); 
 
     // Función para obtener productos de Firebase
     const fetchProductos = async () => {
@@ -58,7 +58,7 @@ function Admin() {
     // Maneja el submit del formulario y guarda en Firestore
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         try {
             // Añadir el producto a la colección 'productos'
             await addDoc(collection(db, 'productos'), {
@@ -67,14 +67,27 @@ function Admin() {
                 descripcion: formData.descripcion,
                 imagenUrl: formData.imagenUrl,
                 categoria: formData.categoria,
-                stock: parseInt(formData.stock), // Asegurarse de que el stock sea un número
+                stock: parseInt(formData.stock), 
                 talla: formData.talla,
-                precio: parseFloat(formData.precio) // Convertir precio a número flotante
+                precio: parseFloat(formData.precio) 
             });
-
+    
             notifySuccess(); // Mostrar la notificación
-            handleCloseModal(); // Cierra el modal después de agregar
-            fetchProductos(); // Refresca la lista de productos
+    
+            // Limpiar los campos del formulario
+            setFormData({
+                nombre: '',
+                subtitulo: '',
+                descripcion: '',
+                imagenUrl: '',
+                categoria: '',
+                stock: '',
+                talla: '',
+                precio: ''
+            });
+    
+            handleCloseModal(); // Cerrar el modal
+            fetchProductos(); // Actualizar la lista de productos
         } catch (error) {
             console.error("Error al agregar producto: ", error);
         }
@@ -107,8 +120,7 @@ function Admin() {
 
     // Manejar el cierre de sesión
     const handleLogout = () => {
-        // Aquí debes agregar la lógica de cierre de sesión (si usas Firebase, llama a firebase.auth().signOut())
-        navigate('/'); // Redirigir al home
+        navigate('/'); 
     };
 
     return (

@@ -26,7 +26,7 @@ function Login() {
     const { email, password } = formData;
 
     try {
-      if (email === "admin@example.com" && password === "admin123456") {
+      if (email === "admin1@example.com" && password === "123456") {
         navigate("/admin");
         return;
       }

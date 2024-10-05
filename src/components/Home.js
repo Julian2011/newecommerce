@@ -71,7 +71,7 @@ function Home() {
         <div className="row">
           {getRandomProducts(3).map(producto => (
             <div key={producto.id} className="col-md-4 mb-4">
-              <div className="card" style={{ maxWidth: '200px', margin: '0 auto' }}> 
+              <div className="card" style={{ maxWidth: '200px', margin: '0 auto', height: "430px"}}> 
                 <img src={producto.imagenUrl} className="card-img-top" alt={producto.nombre} style={{ height: '200px', width: '100%', objectFit: 'contain' }} />
                 <div className="card-body">
                   <h5 className="card-title" style={{ fontSize: '1rem' }}>{producto.nombre}</h5> 
