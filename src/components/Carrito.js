@@ -8,8 +8,11 @@ const Carrito = () => {
     const [carrito, setCarrito] = useState([]);
     const [subtotal, setSubtotal] = useState(0);
     const [total, setTotal] = useState(0);
-    const [showAlert, setShowAlert] = useState(false); 
-    const userId = auth.currentUser?.uid; 
+    const [discount, setDiscount] = useState(0);
+    const [discountCode, setDiscountCode] = useState('');
+    const [discountMessage, setDiscountMessage] = useState('');
+    const [showAlert, setShowAlert] = useState(false);
+    const userId = auth.currentUser?.uid;
 
     useEffect(() => {
         const fetchCarrito = async () => {
@@ -26,11 +29,11 @@ const Carrito = () => {
         const calcularTotales = () => {
             const newSubtotal = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
             setSubtotal(newSubtotal);
-            setTotal(newSubtotal); 
+            setTotal(newSubtotal - discount);
         };
 
         calcularTotales();
-    }, [carrito]);
+    }, [carrito, discount]);
 
     const handleEliminarProducto = async (id) => {
         try {
@@ -43,35 +46,57 @@ const Carrito = () => {
 
     const handleFinalizarCompra = async () => {
         try {
-            // Agregar cada producto de Carrito a la colección de Compras
             const comprasRef = collection(db, 'Compras');
 
-            await Promise.all(carrito.map(async (item) => {
-                await addDoc(comprasRef, {
-                    userId,
+            // Crear objeto de compra con detalles
+            const compraData = {
+                userId,
+                subtotal,
+                discount,
+                total,
+                fecha: new Date(),
+                productos: carrito.map(item => ({
                     nombre: item.nombre,
                     precio: item.precio,
                     cantidad: item.cantidad,
                     imagen: item.imagen,
-                    fecha: new Date()
-                });
-                // Eliminar cada producto de Carrito
+                    totalProducto: item.precio * item.cantidad // Guardar total por producto
+                })),
+            };
+
+            // Guardar la compra en Firestore
+            await addDoc(comprasRef, compraData);
+
+            // Eliminar los productos del carrito
+            await Promise.all(carrito.map(async (item) => {
                 await deleteDoc(doc(db, 'Carrito', item.id));
             }));
 
-            // Vaciar el carrito localmente
+            // Limpiar el carrito en el estado
             setCarrito([]);
-
-            // Mostrar alerta de éxito
+            setSubtotal(0);
+            setTotal(0);
+            setDiscount(0);
+            setDiscountCode('');
+            setDiscountMessage('');
             setShowAlert(true);
-
-            // Ocultar la alerta después de 3 segundos
             setTimeout(() => {
                 setShowAlert(false);
             }, 3000);
-
         } catch (error) {
             console.error("Error al finalizar la compra:", error);
+        }
+    };
+
+    const aplicarDescuento = () => {
+        if (discountCode === 'DESCUENTO10') {
+            const descuento = subtotal * 0.10; 
+            setDiscount(descuento);
+            setDiscountMessage(`¡Descuento del 10% aplicado!`); 
+        } else {
+            alert('Código de descuento no válido');
+            setDiscount(0); 
+            setDiscountMessage(''); 
         }
     };
 
@@ -79,6 +104,7 @@ const Carrito = () => {
         <div>
             <Navbar />
             <div className="container">
+                <p className="text-center text-info">Ingresando el código <strong>DESCUENTO10</strong> podrás obtener un 10% en tu compra.</p>
                 <h1 className="text-center">TU CARRITO</h1>
                 {/* Alerta de éxito */}
                 {showAlert && (
@@ -120,7 +146,19 @@ const Carrito = () => {
                             <div className="card-body">
                                 <h5>Resumen de la compra</h5>
                                 <p>Subtotal: ${subtotal}</p>
+                                <p>Descuento: ${discount}</p>
+                                {discountMessage && <p className="text-success">{discountMessage}</p>}
                                 <p>Total: ${total}</p>
+                                <div className="mb-3">
+                                    <input 
+                                        type="text" 
+                                        className="form-control" 
+                                        placeholder="Código de descuento" 
+                                        value={discountCode}
+                                        onChange={(e) => setDiscountCode(e.target.value)}
+                                    />
+                                    <button onClick={aplicarDescuento} className="btn btn-secondary mt-2">Aplicar</button>
+                                </div>
                                 <button onClick={handleFinalizarCompra} className="btn btn-primary">Finalizar compra</button>
                             </div>
                         </div>
@@ -132,6 +170,8 @@ const Carrito = () => {
 };
 
 export default Carrito;
+
+
 
 
 

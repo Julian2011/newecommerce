@@ -9,6 +9,8 @@ import { Link } from 'react-router-dom';
 function Bermudas() {
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState(''); // Estado para el término de búsqueda
+    const [productosFiltrados, setProductosFiltrados] = useState([]); // Estado para productos filtrados
 
     useEffect(() => {
         const obtenerProductosBermudas = async () => {
@@ -31,6 +33,14 @@ function Bermudas() {
         obtenerProductosBermudas();
     }, []);
 
+    useEffect(() => {
+        // Filtrar los productos según el término de búsqueda
+        const productosFiltrados = productos.filter((producto) =>
+            producto.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setProductosFiltrados(productosFiltrados);
+    }, [searchTerm, productos]); // Ejecuta el filtro cuando cambia el término de búsqueda o los productos
+
     if (loading) {
         return (
             <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
@@ -50,9 +60,19 @@ function Bermudas() {
             <Navbar />
             <div className="container mt-5 text-center">
                 <h2>Productos - Bermudas</h2>
+                <div className="mb-4">
+                    {/* Barra de búsqueda */}
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Buscar productos..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
                 <div className="row">
-                    {productos.length > 0 ? (
-                        productos.map((producto) => (
+                    {productosFiltrados.length > 0 ? (
+                        productosFiltrados.map((producto) => (
                             <div key={producto.id} className="col-md-4 mb-4">
                                 <div className="card" style={{ maxWidth: '200px', margin: '0 auto', height: "430px" }}>
                                     <img src={producto.imagenUrl} className="card-img-top" alt={producto.nombre} style={{ height: '200px', width: '100%', objectFit: 'contain' }} />
@@ -66,7 +86,7 @@ function Bermudas() {
                             </div>
                         ))
                     ) : (
-                        <p>No hay productos disponibles en esta categoría.</p>
+                        <p>No hay productos disponibles o no coinciden con tu búsqueda.</p>
                     )}
                 </div>
             </div>

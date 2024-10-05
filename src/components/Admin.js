@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';  
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faChevronDown } from '@fortawesome/free-solid-svg-icons';
-import { useNavigate } from 'react-router-dom'; 
+import { faUser, faChevronDown, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate } from 'react-router-dom';
 
 function Admin() {
     const [showModal, setShowModal] = useState(false);
@@ -23,9 +23,9 @@ function Admin() {
     const [currentPage, setCurrentPage] = useState(1);
     const productsPerPage = 7; 
     const [menuVisible, setMenuVisible] = useState(false); 
-    const navigate = useNavigate(); 
+    const [editingProductId, setEditingProductId] = useState(null); // Para almacenar el ID del producto en edición
+    const navigate = useNavigate();
 
-    // Función para obtener productos de Firebase
     const fetchProductos = async () => {
         const productosCollection = collection(db, 'productos');
         const productosSnapshot = await getDocs(productosCollection);
@@ -33,12 +33,10 @@ function Admin() {
         setProductos(productosList);
     };
 
-    // Cargar productos cuando el componente se monta
     useEffect(() => {
         fetchProductos();
     }, []);
 
-    // Maneja el cambio de los inputs
     const handleChange = (e) => {
         setFormData({
             ...formData,
@@ -46,35 +44,38 @@ function Admin() {
         });
     };
 
-    // Abre el modal
     const handleShowModal = () => setShowModal(true);
 
-    // Cierra el modal
-    const handleCloseModal = () => setShowModal(false);
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setEditingProductId(null); // Limpiar la variable de edición
+    };
 
-    // Muestra la notificación de éxito
-    const notifySuccess = () => toast.success("Producto agregado exitosamente!");
+    const notifySuccess = (message) => toast.success(message);
 
-    // Maneja el submit del formulario y guarda en Firestore
     const handleSubmit = async (e) => {
         e.preventDefault();
     
         try {
-            // Añadir el producto a la colección 'productos'
-            await addDoc(collection(db, 'productos'), {
-                nombre: formData.nombre,
-                subtitulo: formData.subtitulo,
-                descripcion: formData.descripcion,
-                imagenUrl: formData.imagenUrl,
-                categoria: formData.categoria,
-                stock: parseInt(formData.stock), 
-                talla: formData.talla,
-                precio: parseFloat(formData.precio) 
-            });
+            if (editingProductId) {
+                // Editar el producto
+                const productRef = doc(db, 'productos', editingProductId);
+                await updateDoc(productRef, {
+                    ...formData,
+                    stock: parseInt(formData.stock), 
+                    precio: parseFloat(formData.precio)
+                });
+                notifySuccess("Producto editado exitosamente!");
+            } else {
+                // Añadir el producto
+                await addDoc(collection(db, 'productos'), {
+                    ...formData,
+                    stock: parseInt(formData.stock), 
+                    precio: parseFloat(formData.precio)
+                });
+                notifySuccess("Producto agregado exitosamente!");
+            }
     
-            notifySuccess(); // Mostrar la notificación
-    
-            // Limpiar los campos del formulario
             setFormData({
                 nombre: '',
                 subtitulo: '',
@@ -86,50 +87,66 @@ function Admin() {
                 precio: ''
             });
     
-            handleCloseModal(); // Cerrar el modal
-            fetchProductos(); // Actualizar la lista de productos
+            handleCloseModal();
+            fetchProductos();
         } catch (error) {
-            console.error("Error al agregar producto: ", error);
+            console.error("Error al agregar/editar producto: ", error);
         }
     };
 
-    // Maneja el cambio de página
+    const handleEdit = (producto) => {
+        setFormData({
+            nombre: producto.nombre,
+            subtitulo: producto.subtitulo,
+            descripcion: producto.descripcion,
+            imagenUrl: producto.imagenUrl,
+            categoria: producto.categoria,
+            stock: producto.stock,
+            talla: producto.talla,
+            precio: producto.precio
+        });
+        setEditingProductId(producto.id);
+        setShowModal(true);
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            await deleteDoc(doc(db, 'productos', id));
+            notifySuccess("Producto eliminado exitosamente!");
+            fetchProductos();
+        } catch (error) {
+            console.error("Error al eliminar producto: ", error);
+        }
+    };
+
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-    // Calcular los productos a mostrar en la página actual
     const indexOfLastProduct = currentPage * productsPerPage;
     const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
     const currentProducts = productos.slice(indexOfFirstProduct, indexOfLastProduct);
 
-    // Calcular el número de páginas
     const totalPages = Math.ceil(productos.length / productsPerPage);
 
-    // Cambiar de página anterior
     const handlePrevious = () => {
         if (currentPage > 1) {
             setCurrentPage(currentPage - 1);
         }
     };
 
-    // Cambiar de página siguiente
     const handleNext = () => {
         if (currentPage < totalPages) {
             setCurrentPage(currentPage + 1);
         }
     };
 
-    // Manejar el cierre de sesión
     const handleLogout = () => {
-        navigate('/'); 
+        navigate('/');
     };
 
     return (
         <div className="container mt-5">
             <div className="d-flex justify-content-between align-items-center">
-                {/* Título centrado */}
                 <h1 className="text-center">Bienvenido Administrador</h1>
-
-                {/* Icono de perfil y menú desplegable */}
                 <div className="dropdown">
                     <span
                         className="d-flex align-items-center"
@@ -147,15 +164,13 @@ function Admin() {
                 </div>
             </div>
 
-            {/* Sección de la lista de productos y botón de agregar */}
             <div className="d-flex justify-content-between align-items-center mt-4">
                 <h3 className="text-left">Lista de productos</h3>
                 <button className="btn btn-primary" onClick={handleShowModal}>
-                    Agregar Producto
+                    {editingProductId ? 'Editar Producto' : 'Agregar Producto'}
                 </button>
             </div>
 
-            {/* Tabla de productos */}
             <table className="table table-striped mt-4">
                 <thead>
                     <tr>
@@ -167,6 +182,7 @@ function Admin() {
                         <th>Stock</th>
                         <th>Talla</th>
                         <th>Precio</th>
+                        <th>Acciones</th> {/* Nueva columna de acciones */}
                     </tr>
                 </thead>
                 <tbody>
@@ -181,17 +197,24 @@ function Admin() {
                                 <td>{producto.stock}</td>
                                 <td>{producto.talla}</td>
                                 <td>${producto.precio}</td>
+                                <td>
+                                    <button className="btn btn-sm btn-warning me-2" onClick={() => handleEdit(producto)}>
+                                        <FontAwesomeIcon icon={faEdit} /> Editar
+                                    </button>
+                                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(producto.id)}>
+                                        <FontAwesomeIcon icon={faTrash} /> Eliminar
+                                    </button>
+                                </td>
                             </tr>
                         ))
                     ) : (
                         <tr>
-                            <td colSpan="8" className="text-center">No hay productos</td>
+                            <td colSpan="9" className="text-center">No hay productos</td>
                         </tr>
                     )}
                 </tbody>
             </table>
 
-            {/* Controles de paginación */}
             <nav aria-label="Page navigation example" className="d-flex justify-content-center">
                 <ul className="pagination">
                     <li className="page-item">
@@ -214,67 +237,121 @@ function Admin() {
                 </ul>
             </nav>
 
-            {/* Modal para agregar producto */}
-            <div className={`modal fade ${showModal ? 'show' : ''}`} style={{ display: showModal ? 'block' : 'none' }} tabIndex="-1" role="dialog">
-                <div className="modal-dialog" role="document">
+            <div className={`modal fade ${showModal ? 'show' : ''}`} style={{ display: showModal ? 'block' : 'none' }}>
+                <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title">Agregar Producto</h5>
+                            <h5 className="modal-title">{editingProductId ? 'Editar Producto' : 'Agregar Producto'}</h5>
                             <button type="button" className="close" onClick={handleCloseModal}>
                                 <span>&times;</span>
                             </button>
                         </div>
-                        <div className="modal-body">
-                            <form onSubmit={handleSubmit}>
+                        <form onSubmit={handleSubmit}>
+                            <div className="modal-body">
+                                {/* Formulario */}
                                 <div className="form-group">
                                     <label>Nombre</label>
-                                    <input type="text" name="nombre" className="form-control" value={formData.nombre} onChange={handleChange} required />
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        name="nombre"
+                                        value={formData.nombre}
+                                        onChange={handleChange}
+                                        required
+                                    />
                                 </div>
                                 <div className="form-group">
                                     <label>Subtítulo</label>
-                                    <input type="text" name="subtitulo" className="form-control" value={formData.subtitulo} onChange={handleChange} required />
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        name="subtitulo"
+                                        value={formData.subtitulo}
+                                        onChange={handleChange}
+                                        required
+                                    />
                                 </div>
                                 <div className="form-group">
                                     <label>Descripción</label>
-                                    <textarea name="descripcion" className="form-control" value={formData.descripcion} onChange={handleChange} required></textarea>
+                                    <textarea
+                                        className="form-control"
+                                        name="descripcion"
+                                        value={formData.descripcion}
+                                        onChange={handleChange}
+                                        required
+                                    ></textarea>
                                 </div>
                                 <div className="form-group">
                                     <label>URL de la Imagen</label>
-                                    <input type="text" name="imagenUrl" className="form-control" value={formData.imagenUrl} onChange={handleChange} required />
+                                    <input
+                                        type="url"
+                                        className="form-control"
+                                        name="imagenUrl"
+                                        value={formData.imagenUrl}
+                                        onChange={handleChange}
+                                        required
+                                    />
                                 </div>
                                 <div className="form-group">
                                     <label>Categoría</label>
-                                    <select name="categoria" className="form-control" value={formData.categoria} onChange={handleChange} required>
-                                        <option value="">Selecciona una categoría</option>
-                                        <option value="camisetas">Camisetas</option>
-                                        <option value="calzado">Calzado</option>
-                                        <option value="accesorios">Accesorios</option>
-                                        <option value="jeans">Jeans</option>
-                                        <option value="bermudas">Bermudas</option>
-                                    </select>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        name="categoria"
+                                        value={formData.categoria}
+                                        onChange={handleChange}
+                                        required
+                                    />
                                 </div>
                                 <div className="form-group">
                                     <label>Stock</label>
-                                    <input type="number" name="stock" className="form-control" value={formData.stock} onChange={handleChange} required />
+                                    <input
+                                        type="number"
+                                        className="form-control"
+                                        name="stock"
+                                        value={formData.stock}
+                                        onChange={handleChange}
+                                        required
+                                    />
                                 </div>
                                 <div className="form-group">
                                     <label>Talla</label>
-                                    <input type="text" name="talla" className="form-control" value={formData.talla} onChange={handleChange} required />
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        name="talla"
+                                        value={formData.talla}
+                                        onChange={handleChange}
+                                        required
+                                    />
                                 </div>
                                 <div className="form-group">
                                     <label>Precio</label>
-                                    <input type="number" name="precio" className="form-control" value={formData.precio} onChange={handleChange} required />
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="form-control"
+                                        name="precio"
+                                        value={formData.precio}
+                                        onChange={handleChange}
+                                        required
+                                    />
                                 </div>
-                                <button type="submit" className="btn btn-primary">Agregar Producto</button>
-                            </form>
-                        </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
+                                    Cerrar
+                                </button>
+                                <button type="submit" className="btn btn-primary">
+                                    {editingProductId ? 'Guardar Cambios' : 'Agregar Producto'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
 
-
-            {/* Contenedor de notificaciones */}
-            <ToastContainer />
+            <ToastContainer position="top-right" autoClose={3000} />
         </div>
     );
 }
