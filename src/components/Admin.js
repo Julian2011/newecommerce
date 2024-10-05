@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase'; // Importar la instancia de Firestore
+import { db } from '../firebase';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';  // Importar estilos de react-toastify
+import 'react-toastify/dist/ReactToastify.css';  
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faChevronDown } from '@fortawesome/free-solid-svg-icons';
-import { useNavigate } from 'react-router-dom'; // Cambiado a useNavigate
+import { useNavigate } from 'react-router-dom'; 
 
 function Admin() {
     const [showModal, setShowModal] = useState(false);

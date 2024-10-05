@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { auth } from '../firebase'; 
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from 'react-router-dom';
+import './Login.css'; // Asegúrate de crear este archivo CSS
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -25,22 +26,19 @@ function Login() {
     const { email, password } = formData;
 
     try {
-      // Condición especial para el administrador
       if (email === "admin@example.com" && password === "admin123456") {
-        navigate("/admin");  // Redirige a la vista de administrador
+        navigate("/admin");
         return;
       }
 
-      // Iniciar sesión con Firebase Auth
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/home");  // Redirige a la página principal después del login
+      navigate("/home");
     } catch (error) {
-      // Manejo de errores
       if (error.code === "auth/user-not-found" || error.code === "auth/invalid-credential") {
-        setError("Usuario no registrado"); // Mensaje específico para usuario no registrado
-        setShowModal(true); // Mostrar modal
+        setError("Usuario no registrado");
+        setShowModal(true);
       } else {
-        setError(error.message); // Mostrar otro tipo de error
+        setError(error.message);
       }
     }
   };
@@ -50,9 +48,12 @@ function Login() {
   };
 
   return (
-    <div className="container mt-5 d-flex justify-content-center">
-      <div className="card" style={{ width: '400px' }}>
+    <div className="login-container">
+      <div className="card">
         <div className="card-body">
+          <h2 className="text-center">
+            <img src={require('../assets/images/logo.png')} alt="Logo" className="logo" />
+          </h2>
           <h2 className="card-title text-center">Iniciar Sesión</h2>
           {error && <div className="alert alert-danger">{error}</div>}
           <form onSubmit={handleSubmit}>
@@ -89,7 +90,6 @@ function Login() {
         </div>
       </div>
 
-      {/* Modal para mostrar cuando el usuario no está registrado */}
       <div className={`modal fade ${showModal ? 'show' : ''}`} style={{ display: showModal ? 'block' : 'none' }} tabIndex="-1" role="dialog">
         <div className="modal-dialog" role="document">
           <div className="modal-content">
@@ -115,6 +115,7 @@ function Login() {
 }
 
 export default Login;
+
 
 
 

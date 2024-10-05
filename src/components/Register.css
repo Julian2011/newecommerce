@@ -1,0 +1,21 @@
+.register-container {
+    background-image: url('../assets/images/login.jpeg');
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .register-card {
+    max-width: 600px; 
+    margin: auto;
+    padding: 20px;
+    opacity: 0.9; 
+  }
+  
+  .register-card .card-title {
+    margin-bottom: 20px;
+  }
+  

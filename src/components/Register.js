@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase'; 
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import './Register.css'; 
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -15,7 +16,7 @@ function Register() {
   });
 
   const [error, setError] = useState('');
-  const [showModal, setShowModal] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);  
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -35,7 +36,6 @@ function Register() {
     }
 
     try {
-      // Verificar si el correo electrónico ya está registrado
       const emailExists = await getDoc(doc(db, 'usuarios', email));
       if (emailExists.exists()) {
         setError("Este correo electrónico ya está registrado.");
@@ -50,88 +50,97 @@ function Register() {
         apellido,
         direccion,
         email,
-        password,
         userId: user.uid,
       });
 
-      setShowModal(true); // Mostrar modal al registrar
+      setShowAlert(true);  
+
+      
+      setTimeout(() => {
+        setShowAlert(false);  
+        navigate("/login"); 
+      }, 3000); 
+
     } catch (error) {
       setError(error.message);
     }
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    navigate("/login"); // Redirigir a la página de login
-  };
-
   return (
-    <div className="container mt-5">
-      <div className="card">
+    <div className="register-container">
+      <div className="card register-card">
         <div className="card-body">
-          <h2 className="card-title">Registro de Usuario</h2>
+          <h2 className="text-center">
+            <img src={require('../assets/images/logo.png')} alt="Logo" className="logo" />
+          </h2>
+          <h2 className="card-title text-center">Registro de Usuario</h2>
           {error && <div className="alert alert-danger">{error}</div>}
+          {showAlert && (
+            <div className="alert alert-success" role="alert">
+              Usuario registrado correctamente. Serás redirigido al login en breve.
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="row">
-            <div className="col-md-6 mb-3">
+            <div className="col-md-6 mb-2">
               <label className="form-label">Nombre</label>
               <input
                 type="text"
-                className="form-control"
+                className="form-control form-control-sm"
                 name="nombre"
                 value={formData.nombre}
                 onChange={handleChange}
                 required
               />
             </div>
-            <div className="col-md-6 mb-3">
+            <div className="col-md-6 mb-2">
               <label className="form-label">Apellido</label>
               <input
                 type="text"
-                className="form-control"
+                className="form-control form-control-sm"
                 name="apellido"
                 value={formData.apellido}
                 onChange={handleChange}
                 required
               />
             </div>
-            <div className="col-md-6 mb-3">
+            <div className="col-md-6 mb-2">
               <label className="form-label">Dirección</label>
               <input
                 type="text"
-                className="form-control"
+                className="form-control form-control-sm"
                 name="direccion"
                 value={formData.direccion}
                 onChange={handleChange}
                 required
               />
             </div>
-            <div className="col-md-6 mb-3">
+            <div className="col-md-6 mb-2">
               <label className="form-label">Correo Electrónico</label>
               <input
                 type="email"
-                className="form-control"
+                className="form-control form-control-sm"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 required
               />
             </div>
-            <div className="col-md-6 mb-3">
+            <div className="col-md-6 mb-2">
               <label className="form-label">Contraseña</label>
               <input
                 type="password"
-                className="form-control"
+                className="form-control form-control-sm"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 required
               />
             </div>
-            <div className="col-md-6 mb-3">
+            <div className="col-md-6 mb-2">
               <label className="form-label">Confirmar Contraseña</label>
               <input
                 type="password"
-                className="form-control"
+                className="form-control form-control-sm"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -139,26 +148,9 @@ function Register() {
               />
             </div>
             <div className="col-12 text-center">
-              <button type="submit" className="btn btn-primary">Registrarse</button>
+              <button type="submit" className="btn btn-primary btn-sm">Registrarse</button>
             </div>
           </form>
-        </div>
-      </div>
-
-      {/* Modal para confirmar registro */}
-      <div className={`modal fade ${showModal ? 'show' : ''}`} style={{ display: showModal ? 'block' : 'none' }} tabIndex="-1" role="dialog">
-        <div className="modal-dialog" role="document">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Registro Exitoso</h5>
-            </div>
-            <div className="modal-body">
-              <p>Usuario registrado correctamente.</p>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cerrar</button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -166,6 +158,7 @@ function Register() {
 }
 
 export default Register;
+
 
 
 

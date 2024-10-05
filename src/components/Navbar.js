@@ -1,33 +1,55 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { auth, db } from '../firebase'; 
+import { Link, useNavigate } from 'react-router-dom';
+import { auth, db } from '../firebase';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faShoppingBag } from '@fortawesome/free-solid-svg-icons';
-import { onAuthStateChanged } from 'firebase/auth'; 
-import { doc, getDoc } from 'firebase/firestore'; 
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import logo from '../assets/images/logo.png';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function Navbar() {
   const [user, setUser] = useState(null);
   const [userName, setUserName] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        // Aquí obtenemos el nombre del usuario desde Firestore
+        // Obtener el nombre del usuario desde Firestore
         const userDoc = await getDoc(doc(db, 'usuarios', currentUser.uid));
         if (userDoc.exists()) {
           setUserName(userDoc.data().nombre); // Obtén el 'nombre' del documento del usuario
         }
       } else {
         setUser(null);
-        setUserName(''); // Reinicia el nombre si no hay usuario autenticado
+        setUserName('');
       }
     });
 
     return () => unsubscribe();
   }, []);
+
+  // Función para cerrar sesión
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/Home');
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
+  };
+
+  // Función para manejar el clic en Shopping Bag
+  const handleShoppingBagClick = () => {
+    if (!user) {
+      toast.error('Debes iniciar sesión para poder ver el Shopping Bag');
+    } else {
+      navigate('/carrito');
+    }
+  };
 
   return (
     <>
@@ -39,29 +61,44 @@ function Navbar() {
           </div>
           <div className="navbar-brand mx-auto">
             <Link to="/Home">
-              <img src={logo} alt="Logo de la tienda" style={{ height: '50px' }} />
+              <img src={logo} alt="Logo de la tienda" style={{ height: '50px', paddingLeft: "80px" }} />
             </Link>
           </div>
           <div className="navbar-nav ms-auto">
             {user ? (
-              <span className="nav-link">
-                <FontAwesomeIcon icon={faUser} className="me-1" />
-                {userName}
-              </span>
+              <div className="dropdown">
+                <span
+                  className="nav-link dropdown-toggle"
+                  id="userDropdown"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <FontAwesomeIcon icon={faUser} className="me-1" />
+                  {userName}
+                </span>
+                <ul className="dropdown-menu" aria-labelledby="userDropdown">
+                  <li>
+                    <button className="dropdown-item" onClick={handleLogout}>
+                      Cerrar Sesión
+                    </button>
+                  </li>
+                </ul>
+              </div>
             ) : (
               <Link to="/login" className="nav-link">
                 <FontAwesomeIcon icon={faUser} className="me-1" />
                 Iniciar Sesión
               </Link>
             )}
-            <Link to="/shopping-bag" className="nav-link">
+            <button className="nav-link" onClick={handleShoppingBagClick}>
               <FontAwesomeIcon icon={faShoppingBag} className="me-1" />
               Shopping Bag
-            </Link>
+            </button>
           </div>
         </div>
       </nav>
-      {/* Fila de categorías*/}
+      {/* Fila de categorías */}
       <div className="bg-light py-2">
         <div className="container">
           <div className="row justify-content-center">
@@ -83,11 +120,14 @@ function Navbar() {
           </div>
         </div>
       </div>
+      <ToastContainer />
     </>
   );
 }
 
 export default Navbar;
+
+
 
 
 

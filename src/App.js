@@ -9,14 +9,15 @@ import Camisetas from './components/Camisetas';
 import Jeans from './components/Jeans';
 import Bermudas from './components/Bermudas';
 import Details from './components/Details';
+import Carrito from './components/Carrito';
 
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Redirige la ruta raíz (/) a /login */}
-        <Route path="/" element={<Navigate to="/login" />} />
+        
+        <Route path="/" element={<Navigate to="/Home" />} />
         
         {/* Otras rutas */}
         <Route path="/register" element={<Register />} />
@@ -29,6 +30,8 @@ function App() {
         <Route path="/accesorios" element={<Accesorios />} />
         <Route path="/bermudas" element={<Bermudas />} />
         <Route path="/productos/:id" element={<Details />} />
+        <Route path="/carrito" element={<Carrito />} />
+        
         
       </Routes>
     </Router>
